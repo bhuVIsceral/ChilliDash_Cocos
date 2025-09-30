@@ -50,7 +50,7 @@ export class CollisionManager extends Component {
         }
 
         const objectTag = tagger.tag;
-        console.log("CONTACT DETECTED WITH TAG:", EObjectType[objectTag]); // Prints the tag name!
+        // console.log("CONTACT DETECTED WITH TAG:", EObjectType[objectTag]); // Prints the tag name!
 
         // Now we compare against our safe enum values.
         if (objectTag === EObjectType.Chilli) {
