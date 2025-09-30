@@ -9,6 +9,7 @@ const OFF_SCREEN_Y = 550;
 export class MovingObject extends Component {
     public spawner: Spawner | null = null;
     public speed = 200;
+    public laneIndex: number = 0;
 
     onLoad() {
         // Listen for the 'despawn' event
@@ -21,8 +22,13 @@ export class MovingObject extends Component {
 
     update(deltaTime: number) {
         // Move the object down the screen on every frame
+        if (!this.spawner || !this.spawner.laneRenderer) {
+            return;
+        }
+        
         const newPos = this.node.getPosition();
         newPos.y += this.speed * deltaTime;
+        newPos.x = this.spawner.laneRenderer.laneCenterXAtY(this.laneIndex, newPos.y);
         this.node.setPosition(newPos);
 
         // Check if the object has gone off the bottom of the screen

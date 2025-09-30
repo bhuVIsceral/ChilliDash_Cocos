@@ -7,6 +7,7 @@ import {
 } from "cc";
 import { GameManager } from "./GameManager";
 import { Tagger, EObjectType } from './Tagger';
+import { PlayerController } from "./PlayerController";
 const { ccclass, property } = _decorator;
 
 @ccclass("CollisionManager")
@@ -14,7 +15,11 @@ export class CollisionManager extends Component {
     @property({ type: GameManager })
     public gameManager: GameManager | null = null;
 
+    private playerController: PlayerController | null = null;
+
     start() {
+        this.playerController =this.getComponent(PlayerController);
+
         // Register the collision listener in 'start' for safety.
         const collider = this.getComponent(BoxCollider2D);
         if (collider) {
@@ -52,6 +57,12 @@ export class CollisionManager extends Component {
             this.gameManager.onPlayerCollectChilli();
             otherCollider.node.emit('despawn');
         } else if (objectTag === EObjectType.Obstacle) {
+            // Before registering a hit, we check if the player is jumping.
+            if (this.playerController && this.playerController.isJumping) {
+                // If the player is in the air, do nothing and ignore the obstacle collision.
+                return; 
+            }
+            // If the player is NOT jumping, then it's a valid hit.
             this.gameManager.onPlayerHitObstacle();
         } else if (objectTag === EObjectType.Powerup) {
             this.gameManager.onPlayerCollectPowerUp(otherCollider.node.name);

@@ -12,7 +12,7 @@ const PERSPECTIVE = {
 };
 
 @ccclass("LaneRenderer")
-export class cocos_LaneRenderer extends Component {
+export class LaneRenderer extends Component {
     start() {
         // 'start' is a special Cocos function that runs once when the scene loads.
         // It's the perfect place to draw our static lines.
@@ -67,7 +67,8 @@ export class cocos_LaneRenderer extends Component {
         );
     }
 
-    private laneCenterXAtY(laneIndex: number, y: number): number {
-        return GAME_BASE_WIDTH / 2 + LANES[laneIndex] * this.laneScaleAtY(y);
+    public laneCenterXAtY(laneIndex: number, y: number): number {
+        const screenCenterX = 0; 
+        return screenCenterX + LANES[laneIndex] * this.laneScaleAtY(y);
     }
 }

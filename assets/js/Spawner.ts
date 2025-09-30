@@ -10,6 +10,7 @@ import {
     random,
 } from "cc";
 import { MovingObject } from "./MovingObject"; // Import our new script
+import { LaneRenderer } from './LaneRenderer';
 
 const { ccclass, property } = _decorator;
 
@@ -20,6 +21,8 @@ const SPAWN_Y = -550; // Y position where objects appear at the top
 @ccclass("Spawner")
 export class Spawner extends Component {
     // --- PREFAB REFERENCES ---
+    @property({ type: LaneRenderer })
+    public laneRenderer: LaneRenderer | null = null;
     // We need references to all our prefabs to create the pools.
     @property({ type: Prefab }) public chilliPrefab: Prefab | null = null;
     @property({ type: Prefab }) public cratePrefab: Prefab | null = null;
@@ -201,6 +204,7 @@ export class Spawner extends Component {
             if (movingObject) {
                 movingObject.spawner = this;
                 movingObject.speed = this.gameSpeed; // Pass the current game speed to the object!
+                movingObject.laneIndex = lane;
             }
 
             objNode.setPosition(LANE_X_POSITIONS[lane], SPAWN_Y, 0);

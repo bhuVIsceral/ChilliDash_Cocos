@@ -41,9 +41,10 @@ export class PlayerController extends Component {
     public animationInterval = 0.15; // Time between run frame swaps
 
     // These variables will track the player's state.
+    public isJumping = false;
+    
     private currentLane = 1; // Start in the middle lane (0=left, 1=middle, 2=right)
     private isMoving = false; // Prevents starting a new move while one is in progress
-    private isJumping = false;
     private startY = 0; // The player's initial Y position
     private animationTimer = 0;
     private currentRunFrame = 0;

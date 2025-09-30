@@ -1,6 +1,9 @@
 import { _decorator, Component, Node, Label, director } from "cc";
 import { PlayerController } from "./PlayerController";
 import { Spawner } from "./Spawner";
+import { CameraShaker } from './CameraShaker';
+import { AudioManager } from "./AudioManager";
+
 const { ccclass, property } = _decorator;
 
 // --- CONFIG CONSTANTS ---
@@ -24,6 +27,12 @@ export class GameManager extends Component {
     @property({ type: Spawner })
     public spawner: Spawner | null = null;
 
+    @property({type: CameraShaker})
+    public cameraShaker: CameraShaker | null = null;
+
+    @property({type: AudioManager})
+    public audioManager: AudioManager | null = null;
+
     // --- UI REFERENCES ---
     @property({ type: Label })
     public scoreLabel: Label | null = null;
@@ -45,6 +54,11 @@ export class GameManager extends Component {
     start() {
         // We will add a 'Start Game' button later. For now, we start immediately.
         this.startGame();
+
+
+        if (this.audioManager) {
+            this.audioManager.playBGM();
+        }
     }
 
     update(deltaTime: number) {
@@ -62,18 +76,20 @@ export class GameManager extends Component {
     }
 
     private startGame() {
-        this.gameState = "playing";
-        // Reset all stats
+        this.gameState = 'playing';
         this.score = 0;
         this.lives = MAX_LIVES;
         this.gameSpeed = INITIAL_GAME_SPEED;
         this.timeElapsed = 0;
         this.chilliesCollectedSinceLastScale = 0;
         this.speedMilestones = 0;
-
-        // Update the UI
         this.updateScoreUI();
         this.updateLivesUI();
+
+        // Start the background music
+        if (this.audioManager) {
+            this.audioManager.playBGM();
+        }
     }
 
     private updateDifficulty(deltaTime: number) {
@@ -103,6 +119,14 @@ export class GameManager extends Component {
     public onPlayerHitObstacle() {
         if (this.gameState !== "playing") return;
 
+        if (this.cameraShaker) {
+            this.cameraShaker.shake();
+        }
+
+        if (this.audioManager) {
+            this.audioManager.playHitSfx();
+        }
+
         this.lives--;
         this.updateLivesUI();
         console.log(`Player hit obstacle! Lives remaining: ${this.lives}`);
@@ -115,6 +139,10 @@ export class GameManager extends Component {
     public onPlayerCollectChilli() {
         if (this.gameState !== "playing") return;
 
+        if (this.audioManager) {
+            this.audioManager.playChilliSfx();
+        }
+
         this.score += CHILLI_SCORE; // We will add multiplier logic later
         this.chilliesCollectedSinceLastScale++;
         this.updateScoreUI();
@@ -122,6 +150,10 @@ export class GameManager extends Component {
 
     public onPlayerCollectPowerUp(powerUpType: string) {
         if (this.gameState !== "playing") return;
+
+        if (this.audioManager) {
+            this.audioManager.playPowerupSfx();
+        }
         // We will add power-up activation logic here later
     }
 
@@ -142,10 +174,13 @@ export class GameManager extends Component {
 
     private endGame() {
         this.gameState = "gameOver";
+        if (this.audioManager) {
+            this.audioManager.stopBGM();
+        }
         console.log("Game Over!");
 
         // Reload the entire scene to restart
         // In a full game, you'd show a game over screen here.
-        // director.loadScene("main");
+        director.loadScene("chilli_dash");
     }
 }
