@@ -7,7 +7,7 @@ const { ccclass, property } = _decorator;
 // We can move some config values here for clarity
 const INITIAL_GAME_SPEED = 300;
 const MAX_GAME_SPEED = 800;
-const MAX_LIVES = 5;
+const MAX_LIVES = 3;
 const CHILLI_SCORE = 1;
 
 // Difficulty Scaling Rules
@@ -122,8 +122,6 @@ export class GameManager extends Component {
 
     public onPlayerCollectPowerUp(powerUpType: string) {
         if (this.gameState !== "playing") return;
-
-        console.log(`Collected power-up: ${powerUpType}`);
         // We will add power-up activation logic here later
     }
 
@@ -148,6 +146,6 @@ export class GameManager extends Component {
 
         // Reload the entire scene to restart
         // In a full game, you'd show a game over screen here.
-        director.loadScene("main");
+        // director.loadScene("main");
     }
 }

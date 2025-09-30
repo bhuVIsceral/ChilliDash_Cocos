@@ -6,6 +6,7 @@ import {
     BoxCollider2D,
 } from "cc";
 import { GameManager } from "./GameManager";
+import { Tagger, EObjectType } from './Tagger';
 const { ccclass, property } = _decorator;
 
 @ccclass("CollisionManager")
@@ -14,10 +15,13 @@ export class CollisionManager extends Component {
     public gameManager: GameManager | null = null;
 
     start() {
-        //Register the collision listener
+        // Register the collision listener in 'start' for safety.
         const collider = this.getComponent(BoxCollider2D);
         if (collider) {
-            collider.on("begin-contract", this.onBeginContact, this);
+            collider.on('begin-contact', this.onBeginContact, this);
+            console.log("Collision listener registered on Player.");
+        } else {
+            console.error("Player is missing its BoxCollider2D component!");
         }
     }
 
@@ -29,29 +33,29 @@ export class CollisionManager extends Component {
         }
     }
 
-    private onBeginContact(
-        selfCollider: Collider2D,
-        otherCollider: Collider2D,
-        contact: IPhysics2DContact | null
-    ) {
+    private onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null) {
         if (!this.gameManager) return;
+        
+        // --- NEW LOGIC ---
+        // Instead of checking the integer tag, we get our custom Tagger component.
+        const tagger = otherCollider.getComponent(Tagger);
+        if (!tagger) {
+            // If the object has no tagger, we ignore it.
+            return;
+        }
 
-        // We can check the name of the object we hit
-        const otherNodeName = otherCollider.node.name;
+        const objectTag = tagger.tag;
+        console.log("CONTACT DETECTED WITH TAG:", EObjectType[objectTag]); // Prints the tag name!
 
-        if (otherNodeName === "Chilli") {
+        // Now we compare against our safe enum values.
+        if (objectTag === EObjectType.Chilli) {
             this.gameManager.onPlayerCollectChilli();
-            // We need to tell the spawner to despawn this chilli
-            otherCollider.node.emit("despawn");
-        } else if (
-            otherNodeName === "Crate" ||
-            otherNodeName === "Grass" ||
-            otherNodeName === "Flower"
-        ) {
+            otherCollider.node.emit('despawn');
+        } else if (objectTag === EObjectType.Obstacle) {
             this.gameManager.onPlayerHitObstacle();
-        } else if (otherNodeName.includes("Powerup")) {
-            this.gameManager.onPlayerCollectPowerUp(otherNodeName);
-            otherCollider.node.emit("despawn");
+        } else if (objectTag === EObjectType.Powerup) {
+            this.gameManager.onPlayerCollectPowerUp(otherCollider.node.name);
+            otherCollider.node.emit('despawn');
         }
     }
 }
