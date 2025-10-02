@@ -6,9 +6,6 @@ import {
     Sprite,
     SpriteFrame,
     Animation,
-    Input,
-    KeyCode,
-    input,
     tween,
 } from "cc";
 const { ccclass, property } = _decorator;
@@ -41,8 +38,7 @@ export class PlayerController extends Component {
     public animationInterval = 0.15; // Time between run frame swaps
 
     // These variables will track the player's state.
-    public isJumping = false;
-    
+    public isJumping = false;    
     private currentLane = 1; // Start in the middle lane (0=left, 1=middle, 2=right)
     private isMoving = false; // Prevents starting a new move while one is in progress
     private startY = 0; // The player's initial Y position
@@ -61,40 +57,40 @@ export class PlayerController extends Component {
         
     }
 
-    start() {
-        // In start, we set up listeners that interact with other engine systems.
-        // This is safer because all nodes are guaranteed to be ready.
-        input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
-    }
+    // start() {
+    //     // In start, we set up listeners that interact with other engine systems.
+    //     // This is safer because all nodes are guaranteed to be ready.
+    //     input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+    // }
 
-    onDestroy() {
-        // This is important for preventing memory leaks!
-        // We remove the listener when the player object is destroyed.
-        input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
-    }
+    // onDestroy() {
+    //     // This is important for preventing memory leaks!
+    //     // We remove the listener when the player object is destroyed.
+    //     input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+    // }
 
-    private onKeyDown(event: any) {
-        // This function is called every time a key is pressed.
-        // Don't allow any new actions while already jumping or sliding.
-        if (this.isJumping || this.isMoving) {
-            return;
-        }
-        switch (event.keyCode) {
-            case KeyCode.KEY_A:
-            case KeyCode.ARROW_LEFT:
-                this.moveLeft();
-                break;
-            case KeyCode.KEY_D:
-            case KeyCode.ARROW_RIGHT:
-                this.moveRight();
-                break;
-            case KeyCode.KEY_W:
-            case KeyCode.ARROW_UP:
-            case KeyCode.SPACE:
-                this.jump();
-                break;
-        }
-    }
+    // private onKeyDown(event: any) {
+    //     // This function is called every time a key is pressed.
+    //     // Don't allow any new actions while already jumping or sliding.
+    //     if (this.isJumping || this.isMoving) {
+    //         return;
+    //     }
+    //     switch (event.keyCode) {
+    //         case KeyCode.KEY_A:
+    //         case KeyCode.ARROW_LEFT:
+    //             this.moveLeft();
+    //             break;
+    //         case KeyCode.KEY_D:
+    //         case KeyCode.ARROW_RIGHT:
+    //             this.moveRight();
+    //             break;
+    //         case KeyCode.KEY_W:
+    //         case KeyCode.ARROW_UP:
+    //         case KeyCode.SPACE:
+    //             this.jump();
+    //             break;
+    //     }
+    // }
 
     update(deltaTime: number) {
         // This function runs every frame. We'll use it to update the animation.
