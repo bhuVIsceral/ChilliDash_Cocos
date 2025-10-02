@@ -58,7 +58,7 @@ export class Spawner extends Component {
     // The interval will now be dynamic based on game speed
     private get spawnInterval() {
         // As game speed increases, the spawn interval decreases (more spawns)
-        return (100 / this.gameSpeed) * 2;
+        return (50 / this.gameSpeed) * 2;
     }
 
     onLoad() {

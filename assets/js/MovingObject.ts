@@ -29,7 +29,7 @@ export class MovingObject extends Component {
         const gameManager = GameManager.instance;
         const tagger = this.getComponent(Tagger);
 
-        if (gameManager && tagger && tagger.tag === EObjectType.Chilli && gameManager.powerupManager?.isActive('PowerupMagnet')) {
+        if (gameManager && gameManager.playerController && tagger && tagger.tag === EObjectType.Chilli && gameManager.powerupManager?.isActive(EObjectType.PowerupMagnet)) {
             // If this is a chilli and the magnet is active, move towards the player.
             const playerNode = gameManager.playerController.node;
             const targetPos = playerNode.position;

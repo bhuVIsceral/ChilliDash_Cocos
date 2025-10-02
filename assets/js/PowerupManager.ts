@@ -1,16 +1,17 @@
 import { _decorator, Component } from 'cc';
+import { EObjectType } from './Tagger';
 const { ccclass, property } = _decorator;
 
 // We define the properties of our power-ups here
-const POWERUP_CONFIG = {
-    'PowerupSpeed': { duration: 5 },
-    'PowerupMagnet': { duration: 8 },
-    'Powerup2x': { duration: 10 },
-};
+const POWERUP_CONFIG: Map<EObjectType, { duration: number }> = new Map([
+    [EObjectType.PowerupSpeed, { duration: 5 }],
+    [EObjectType.PowerupMagnet, { duration: 8 }],
+    [EObjectType.Powerup2x, { duration: 10 }],
+]);
 
 // A simple interface to describe an active power-up
 interface IActivePowerup {
-    key: string;
+    type: EObjectType;
     duration: number;
     timeLeft: number;
 }
@@ -18,7 +19,7 @@ interface IActivePowerup {
 @ccclass('PowerupManager')
 export class PowerupManager extends Component {
     
-    private activePowerups: Map<string, IActivePowerup> = new Map();
+    private activePowerups: Map<EObjectType, IActivePowerup> = new Map();
 
     update(deltaTime: number) {
         // On every frame, we tick down the timer for all active power-ups.
@@ -31,26 +32,25 @@ export class PowerupManager extends Component {
         }
     }
 
-    public activatePowerup(powerupNodeName: string) {
-        const config = POWERUP_CONFIG[powerupNodeName];
+    public activatePowerup(powerupType: EObjectType) {
+        const config = POWERUP_CONFIG.get(powerupType);
         if (config) {
-            this.activePowerups.set(powerupNodeName, {
-                key: powerupNodeName,
+            this.activePowerups.set(powerupType, {
+                type: powerupType, // This now correctly matches the interface
                 duration: config.duration,
                 timeLeft: config.duration,
             });
-            // console.log(`Activated power-up: ${powerupNodeName}`);
+            console.log(`Activated power-up: ${EObjectType[powerupType]}`);
         }
     }
 
-    // This public method lets any other script check if a power-up is active.
-    public isActive(powerupNodeName: string): boolean {
-        return this.activePowerups.has(powerupNodeName);
+    public isActive(powerupType: EObjectType): boolean {
+        return this.activePowerups.has(powerupType);
     }
     
     // This method is for the UI, to get the remaining time as a percentage.
-    public getProgress(powerupNodeName: string): number {
-        const powerup = this.activePowerups.get(powerupNodeName);
+    public getProgress(powerupType: EObjectType): number {
+        const powerup = this.activePowerups.get(powerupType);
         if (powerup) {
             return powerup.timeLeft / powerup.duration;
         }

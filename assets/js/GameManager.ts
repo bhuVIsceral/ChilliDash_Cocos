@@ -4,6 +4,7 @@ import { Spawner } from "./Spawner";
 import { CameraShaker } from './CameraShaker';
 import { AudioManager } from "./AudioManager";
 import { PowerupManager } from "./PowerupManager";
+import { EObjectType } from "./Tagger";
 
 const { ccclass, property } = _decorator;
 
@@ -124,7 +125,7 @@ export class GameManager extends Component {
         let currentSpeed = this.gameSpeed;
 
         // Apply speed boost if active
-        if (this.powerupManager?.isActive('PowerupSpeed')) {
+        if (this.powerupManager?.isActive(EObjectType.PowerupSpeed)) {
             currentSpeed *= 2;
         }
 
@@ -150,17 +151,16 @@ export class GameManager extends Component {
     public onPlayerCollectChilli() {
         if (this.gameState !== "playing") return;
         if (this.audioManager) this.audioManager.playChilliSfx();
-        this.score += CHILLI_SCORE; // We will add multiplier logic later
+
+        const multiplier = this.powerupManager?.isActive(EObjectType.Powerup2x) ? 2 : 1;
+        this.score += CHILLI_SCORE * multiplier;
+
         this.chilliesCollectedSinceLastScale++;
         this.updateScoreUI();
     }
 
-    public onPlayerCollectPowerUp(powerUpType: string) {
+    public onPlayerCollectPowerUp(powerUpType: EObjectType) {
         if (this.gameState !== "playing") return;
-
-        // --- DEBUGGING ---
-        // console.log(`CollisionManager reported collecting: '${powerUpType}'`);
-
         if (this.audioManager) this.audioManager.playPowerupSfx();
         this.powerupManager?.activatePowerup(powerUpType);
     }
@@ -183,24 +183,16 @@ export class GameManager extends Component {
     private updatePowerupUI() {
         if (!this.powerupManager) return;
         
-        // Show/hide the 'x2' icon next to the lives
-        // if (this.livesMultiplierIcon) {
-        //     this.livesMultiplierIcon.active = this.powerupManager.isActive('Powerup2x');
-        // }
-
         // Update each card's active state and progress bar
-        const updateCard = (card: Node | null, key: string) => {
+        const updateCard = (card: Node | null, key: EObjectType) => {
             if (card) {
                 const isActive = this.powerupManager.isActive(key);
                 const activeGlow = card.getChildByName('ActiveGlow');
-                
                 if (activeGlow) activeGlow.active = isActive;
-                else console.error(`Could not find 'ActiveGlow' child on card: ${card.name}`);
 
                 const progressBarNode = card.getChildByName('ProgressBar');
                 if (progressBarNode) {
-                    console.log(progressBarNode + isActive.toString());
-                    // --- FIXES ARE HERE ---
+
                     const opacityComp = progressBarNode.getComponent(UIOpacity);
                     if (opacityComp) {
                         console.log(progressBarNode + isActive.toString());
@@ -215,9 +207,9 @@ export class GameManager extends Component {
             }
         };
 
-        updateCard(this.powerupCardSpeed, 'PowerupSpeed');
-        updateCard(this.powerupCardMagnet, 'PowerupMagnet');
-        updateCard(this.powerupCard2x, 'Powerup2x');
+        updateCard(this.powerupCardSpeed, EObjectType.PowerupSpeed);
+        updateCard(this.powerupCardMagnet, EObjectType.PowerupMagnet);
+        updateCard(this.powerupCard2x, EObjectType.Powerup2x);
     }
 
     private endGame() {

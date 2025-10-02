@@ -7,7 +7,9 @@ export enum EObjectType {
     None,
     Chilli,
     Obstacle,
-    Powerup,
+    PowerupSpeed,
+    PowerupMagnet,
+    Powerup2x,
 }
 // This makes the enum available in the editor's "Add Property" menu.
 Enum(EObjectType);
