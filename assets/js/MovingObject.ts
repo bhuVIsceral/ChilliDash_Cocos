@@ -7,6 +7,7 @@ const { ccclass, property } = _decorator;
 
 // This is the Y position where objects are considered "off-screen" at the bottom.
 const OFF_SCREEN_Y = 550;
+const MAGNET_RADIUS = 200;
 
 @ccclass("MovingObject")
 export class MovingObject extends Component {
@@ -31,18 +32,30 @@ export class MovingObject extends Component {
         const currentSpeed = gameManager.currentGameSpeed;
         const tagger = this.getComponent(Tagger);
 
-        if (gameManager && gameManager.playerController && tagger && tagger.tag === EObjectType.Chilli && gameManager.powerupManager?.isActive(EObjectType.PowerupMagnet)) {
+        let wasAttracted = false; // A flag to check if magnet logic was applied
+
+        if (gameManager && gameManager.playerController && tagger && 
+            tagger.tag !== EObjectType.Obstacle &&
+            tagger.tag !== EObjectType.None &&
+            gameManager.powerupManager?.isActive(EObjectType.PowerupMagnet)) {
             // If this is a chilli and the magnet is active, move towards the player.
             const playerNode = gameManager.playerController.node;
             const targetPos = playerNode.position;
             const currentPos = this.node.position;
             
-            // Interpolate (lerp) towards the player's position
-            const newPos = new Vec3();
-            Vec3.lerp(newPos, currentPos, targetPos, 0.1);
-            this.node.setPosition(newPos);
+            // Calculate the distance between the chilli and the player
+            const distance = Vec3.distance(currentPos, targetPos);
 
-        } else {
+            if(distance < MAGNET_RADIUS) {
+                // Interpolate (lerp) towards the player's position
+                const newPos = new Vec3();
+                Vec3.lerp(newPos, currentPos, targetPos, 0.1);
+                this.node.setPosition(newPos);
+                wasAttracted = true;
+            }
+
+        }   
+        if (!wasAttracted) {
             // Move the object down the screen on every frame
             if (!this.spawner || !this.spawner.laneRenderer) {
                 return;
