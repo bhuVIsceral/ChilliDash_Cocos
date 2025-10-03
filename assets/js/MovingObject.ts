@@ -11,7 +11,7 @@ const OFF_SCREEN_Y = 550;
 @ccclass("MovingObject")
 export class MovingObject extends Component {
     public spawner: Spawner | null = null;
-    public speed = 200;
+    // public speed = 200;
     public laneIndex: number = 0;
 
     onLoad() {
@@ -27,6 +27,8 @@ export class MovingObject extends Component {
         // --- MAGNET LOGIC ---
         // We use the singleton to easily access the game state.
         const gameManager = GameManager.instance;
+        if (!gameManager) return; // Safety check
+        const currentSpeed = gameManager.currentGameSpeed;
         const tagger = this.getComponent(Tagger);
 
         if (gameManager && gameManager.playerController && tagger && tagger.tag === EObjectType.Chilli && gameManager.powerupManager?.isActive(EObjectType.PowerupMagnet)) {
@@ -47,7 +49,8 @@ export class MovingObject extends Component {
             }
             
             const newPos = this.node.getPosition();
-            newPos.y += this.speed * deltaTime;
+            // newPos.y += this.speed * deltaTime;
+            newPos.y += currentSpeed * deltaTime;
             newPos.x = this.spawner.laneRenderer.laneCenterXAtY(this.laneIndex, newPos.y);
             this.node.setPosition(newPos);
         }

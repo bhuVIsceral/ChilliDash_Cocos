@@ -5,7 +5,6 @@ import {
     Prefab,
     NodePool,
     instantiate,
-    Vec3,
     randomRangeInt,
     random,
 } from "cc";
@@ -34,7 +33,7 @@ export class Spawner extends Component {
     @property({ type: Prefab }) public powerup2xPrefab: Prefab | null = null;
 
     // This property will be updated by the GameManager
-    public gameSpeed = 400;
+    // public gameSpeed = 400;
 
     // --- OBJECT POOLS ---
     // We create a pool for each type of object.
@@ -58,7 +57,7 @@ export class Spawner extends Component {
     // The interval will now be dynamic based on game speed
     private get spawnInterval() {
         // As game speed increases, the spawn interval decreases (more spawns)
-        return (50 / this.gameSpeed) * 2;
+        return 0.75;
     }
 
     onLoad() {
@@ -134,7 +133,7 @@ export class Spawner extends Component {
             if (randomValue < 0.2) {
                 // 2% chance for a power-up
                 this.spawnRandomPowerUp();
-            } else if (randomValue < 0.5 && randomValue > 0.2) {
+            } else if (randomValue < 0.3 && randomValue > 0.2) {
                 // 48% chance for an obstacle
                 this.spawnObstaclePattern();
             } else {
@@ -161,14 +160,14 @@ export class Spawner extends Component {
         // --- Difficulty Scaling for Obstacles ---
         // The chance of a 2-lane block increases with game speed.
         // Let's say max speed is 600. Chance = gameSpeed / (maxSpeed * 2)
-        const twoLaneChance = this.gameSpeed / 1200;
-        if (random() < twoLaneChance) {
+        // const twoLaneChance = this.gameSpeed / 1200;
+        // if (random() < twoLaneChance) {
             let secondLane;
             do {
                 secondLane = randomRangeInt(0, 3);
             } while (secondLane === randomLane); // Make sure it's a different lane
             this.spawnRandomObstacle(secondLane);
-        }
+        // }
     }
 
     private spawnRandomObstacle(lane: number) {
@@ -203,11 +202,12 @@ export class Spawner extends Component {
             const movingObject = objNode.getComponent(MovingObject);
             if (movingObject) {
                 movingObject.spawner = this;
-                movingObject.speed = this.gameSpeed; // Pass the current game speed to the object!
+                // movingObject.speed = this.gameSpeed; // Pass the current game speed to the object!
                 movingObject.laneIndex = lane;
             }
 
-            objNode.setPosition(LANE_X_POSITIONS[lane], SPAWN_Y, 0);
+            const initialX = this.laneRenderer.laneCenterXAtY(lane, SPAWN_Y);
+            objNode.setPosition(initialX, SPAWN_Y, 0);
             this.node.addChild(objNode);
         }
     }

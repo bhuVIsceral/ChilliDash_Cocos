@@ -4,8 +4,8 @@ const { ccclass, property } = _decorator;
 
 // We define the properties of our power-ups here
 const POWERUP_CONFIG: Map<EObjectType, { duration: number }> = new Map([
-    [EObjectType.PowerupSpeed, { duration: 5 }],
-    [EObjectType.PowerupMagnet, { duration: 8 }],
+    [EObjectType.PowerupSpeed, { duration: 4 }],
+    [EObjectType.PowerupMagnet, { duration: 6 }],
     [EObjectType.Powerup2x, { duration: 10 }],
 ]);
 

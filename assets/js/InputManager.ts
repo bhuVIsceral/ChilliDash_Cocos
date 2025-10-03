@@ -28,8 +28,12 @@ export class InputManager extends Component {
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
 
         // 2. Touch/Mouse Swipe
-        this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
-        this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
+        //Global listeners
+        input.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
+        input.on(Input.EventType.TOUCH_END, this.onTouchEnd, this);
+
+        // this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
+        // this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
         
         // 3. UI Buttons
         if (this.leftButton) this.leftButton.on(Node.EventType.TOUCH_START, this.playerController.moveLeft, this.playerController);
@@ -78,30 +82,27 @@ export class InputManager extends Component {
 
         const touchEndPos = event.getUILocation();
         const touchDuration = performance.now() - this.touchStartTime;
-
         const deltaX = touchEndPos.x - this.touchStartPos.x;
         const deltaY = touchEndPos.y - this.touchStartPos.y;
 
-        const tapMovementThreshold = 20; // Max distance moved to still be considered a tap
+        const absDeltaX = Math.abs(deltaX);
+        const absDeltaY = Math.abs(deltaY);
+
+        const tapMovementThreshold = 25; // Max distance moved to still be considered a tap
         const tapDurationThreshold = 200; // Max time in milliseconds for a tap
         
+        // Check if the swipe was primarily horizontal or vertical
+        if (absDeltaX > absDeltaY && absDeltaX > this.swipeThreshold) {
+            if (deltaX > 0) this.playerController.moveRight();
+            else this.playerController.moveLeft();
+            return; // It was a horizontal swipe, so we are done.
+        } 
+
         // --- TAP DETECTION LOGIC ---
         // Check for a tap (short duration and minimal movement)
-        if (touchDuration < tapDurationThreshold && Math.abs(deltaX) < tapMovementThreshold && Math.abs(deltaY) < tapMovementThreshold) {
+        if (touchDuration < tapDurationThreshold && absDeltaX < tapMovementThreshold && absDeltaY < tapMovementThreshold) {
             this.playerController.jump();
             return; // It was a tap, so we are done.
         }
-
-        // Check if the swipe was primarily horizontal or vertical
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            // Horizontal Swipe
-            if (Math.abs(deltaX) > this.swipeThreshold) {
-                if (deltaX > 0) {
-                    this.playerController.moveRight();
-                } else {
-                    this.playerController.moveLeft();
-                }
-            }
-        } 
     }
 }

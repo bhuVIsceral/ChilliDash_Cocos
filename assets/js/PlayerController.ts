@@ -12,7 +12,7 @@ const { ccclass, property } = _decorator;
 
 // We need to define our lane positions, just like in the old game.
 // In Cocos, the center is 0, so the lanes are negative and positive.
-const LANE_X_POSITIONS = [-120, 0, 120];
+const LANE_X_POSITIONS = [-160, 0, 160];
 
 @ccclass("PlayerController")
 export class PlayerController extends Component {
@@ -120,7 +120,7 @@ export class PlayerController extends Component {
 
     public moveLeft() {
         // We only move if the player is not already moving and not in the leftmost lane.
-        if (this.isMoving || this.currentLane === 0) {
+        if (this.isJumping || this.isMoving || this.currentLane === 0) {
             return;
         }
         this.currentLane--;
@@ -129,7 +129,7 @@ export class PlayerController extends Component {
 
     public moveRight() {
         // We only move if the player is not already moving and not in the rightmost lane.
-        if (this.isMoving || this.currentLane === 2) {
+        if (this.isJumping || this.isMoving || this.currentLane === 2) {
             return;
         }
         this.currentLane++;
