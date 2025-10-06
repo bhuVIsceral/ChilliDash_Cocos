@@ -8,6 +8,8 @@ import {
     Animation,
     tween,
 } from "cc";
+
+import { AudioManager } from "./AudioManager";
 const { ccclass, property } = _decorator;
 
 // We need to define our lane positions, just like in the old game.
@@ -18,6 +20,7 @@ const LANE_X_POSITIONS = [-160, 0, 160];
 export class PlayerController extends Component {
     // This is a special Cocos decorator. It makes the 'moveDuration' variable
     // visible and editable in the Inspector window in the editor!
+    @property({ type: AudioManager }) public audioManager: AudioManager | null = null;
     @property
     public moveDuration = 0.25;
     @property
@@ -139,7 +142,7 @@ export class PlayerController extends Component {
     public jump() {
         if (this.isJumping) return;
         this.isJumping = true;
-
+        this.audioManager?.playJumpSfx();
         // Use a tween to animate the jump.
         tween(this.node)
             // Go up

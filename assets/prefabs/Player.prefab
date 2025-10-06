@@ -224,6 +224,7 @@
     "__prefab": {
       "__id__": 11
     },
+    "audioManager": null,
     "moveDuration": 0.15,
     "jumpHeight": 100,
     "jumpDuration": 0.5,

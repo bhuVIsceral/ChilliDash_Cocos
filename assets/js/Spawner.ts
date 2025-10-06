@@ -133,7 +133,7 @@ export class Spawner extends Component {
             if (randomValue < 0.2) {
                 // 2% chance for a power-up
                 this.spawnRandomPowerUp();
-            } else if (randomValue < 0.3 && randomValue > 0.2) {
+            } else if (randomValue < 0.4 && randomValue > 0.2) {
                 // 48% chance for an obstacle
                 this.spawnObstaclePattern();
             } else {

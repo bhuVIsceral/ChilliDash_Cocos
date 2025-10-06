@@ -1,6 +1,5 @@
 import { _decorator, Component, Node, input, Input, EventTouch, KeyCode, Vec2 } from 'cc';
 import { PlayerController } from './PlayerController'; // We need to talk to the player
-
 const { ccclass, property } = _decorator;
 
 @ccclass('InputManager')

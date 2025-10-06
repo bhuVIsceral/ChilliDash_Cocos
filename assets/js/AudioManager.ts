@@ -86,7 +86,7 @@ export class AudioManager extends Component {
         }
     }
 
-    public playWooshSfx() {
+    public playJumpSfx() {
         if (this.failSfx && this.bgmSource) {
             this.bgmSource.playOneShot(this.failSfx, .25);
         }

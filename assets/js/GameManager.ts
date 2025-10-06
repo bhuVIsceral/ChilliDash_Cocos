@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Label, director, Sprite, SpriteFrame, UIOpacity, Button, Color } from "cc";
+import { _decorator, Component, Node, Label, director, Sprite, SpriteFrame, UIOpacity, Button, Color, Vec3 } from "cc";
 import { languageChangeEvent, LocalizationManager } from "./LocalizationManager";
 import { PlayerController } from "./PlayerController";
 import { Spawner } from "./Spawner";
@@ -6,6 +6,7 @@ import { CameraShaker } from './CameraShaker';
 import { AudioManager } from "./AudioManager";
 import { PowerupManager } from "./PowerupManager";
 import { EObjectType } from "./Tagger";
+import { VFXManager } from "./VFXManager";
 
 const { ccclass, property } = _decorator;
 
@@ -34,9 +35,11 @@ export class GameManager extends Component {
     @property({ type: CameraShaker }) public cameraShaker: CameraShaker | null = null;
     @property({ type: AudioManager }) public audioManager: AudioManager | null = null;
     @property({ type: PowerupManager }) public powerupManager: PowerupManager | null = null;
+    @property({ type: VFXManager }) public vfxManager: VFXManager | null = null;
 
     // --- NEW: UI MENU REFERENCES ---
     @property({ type: Node }) public startMenu: Node | null = null;
+    @property({ type: Node }) public howToPlayUI: Node | null = null;
     @property({ type: Node }) public gameOverMenu: Node | null = null;
     @property({ type: Node }) public inGameUI: Node | null = null; // A parent node for all in-game UI
     @property({ type: Label }) public finalScoreLabel: Label | null = null;
@@ -51,7 +54,7 @@ export class GameManager extends Component {
     
     @property({type: Button}) public englishButton: Button | null = null;
     @property({type: Button}) public hindiButton: Button | null = null;
-    // @property({type: Button}) public hinglishButton: Button | null = null;
+    @property({type: Button}) public hinglishButton: Button | null = null;
 
     // --- POWERUP UI ---
     // References for the UI cards to show their active state
@@ -98,6 +101,7 @@ export class GameManager extends Component {
         // Ensure the game is reset
         // this.startGame();
         if (this.startMenu) this.startMenu.active = true;
+        if (this.howToPlayUI) this.howToPlayUI.active = false;
         if (this.gameOverMenu) this.gameOverMenu.active = false;
         if (this.inGameUI) this.inGameUI.active = false;
 
@@ -107,10 +111,6 @@ export class GameManager extends Component {
         // Update the game speed based on difficulty scaling
         this.updateDifficulty(deltaTime);
         this.currentGameSpeed = this.calculateCurrentSpeed();
-        // this.applyPowerupEffects();
-        // Tell the spawner the current game speed
-        // if (this.spawner) this.spawner.gameSpeed = this.gameSpeed;
-
         // Update the UI every frame
         this.updatePowerupUI();
     }
@@ -143,11 +143,11 @@ export class GameManager extends Component {
                 LocalizationManager.instance.setLanguage('hi');
             }, this);
         }
-        // if (this.hinglishButton) {
-        //     this.hinglishButton.node.on('click', () => {
-        //         cocos_LocalizationManager.instance.setLanguage('en_HI');
-        //     }, this);
-        // }
+        if (this.hinglishButton) {
+            this.hinglishButton.node.on('click', () => {
+                LocalizationManager.instance.setLanguage('en_HI');
+            }, this);
+        }
     }
 
      private updateLanguageButtonUIColor() {
@@ -172,15 +172,23 @@ export class GameManager extends Component {
             hindiLabel.color = (currentLang === 'hi') ? activeColor : inactiveColor;
         }
 
-        // const hinglishLabel = getButtonLabel(this.hinglishButton);
-        // if (hinglishLabel) {
-        //     hinglishLabel.color = (currentLang === 'en_HI') ? activeColor : inactiveColor;
-        // }
+        const hinglishLabel = getButtonLabel(this.hinglishButton);
+        if (hinglishLabel) {
+            hinglishLabel.color = (currentLang === 'en_HI') ? activeColor : inactiveColor;
+        }
+    }
+
+    private howToPlay() {
+        if (this.startMenu) this.startMenu.active = false;
+        if (this.howToPlayUI) this.howToPlayUI.active = true;
+        if (this.gameOverMenu) this.gameOverMenu.active = false;
+        if (this.inGameUI) this.inGameUI.active = false;        
     }
 
     private startGame() {
         this.gameState = 'playing';
         if (this.startMenu) this.startMenu.active = false;
+        if (this.howToPlayUI) this.howToPlayUI.active = false;
         if (this.gameOverMenu) this.gameOverMenu.active = false;
         if (this.inGameUI) this.inGameUI.active = true;
 
@@ -226,25 +234,11 @@ export class GameManager extends Component {
         return speed;
     }
 
-    // private applyPowerupEffects() {
-    //     // Temporarily store the base speed
-    //     let currentSpeed = this.gameSpeed;
-
-    //     // Apply speed boost if active
-    //     if (this.powerupManager?.isActive(EObjectType.PowerupSpeed)) {
-    //         currentSpeed *= 2;
-    //     }
-
-    //     // Set the final speed for the spawner
-    //     if (this.spawner) {
-    //         this.spawner.gameSpeed = currentSpeed;
-    //     }
-    // }
-
-    // --- Public methods to be called by other scripts ---
-
     public onPlayerHitObstacle() {
         if (this.gameState !== "playing") return;
+
+        this.vfxManager?.playHitEffect();
+
         if (this.cameraShaker) this.cameraShaker.shake();
         if (this.audioManager) this.audioManager.playHitSfx();
         this.lives--;
@@ -267,6 +261,7 @@ export class GameManager extends Component {
 
     public onPlayerCollectPowerUp(powerUpType: EObjectType) {
         if (this.gameState !== "playing") return;
+        this.vfxManager?.playCollectEffect();
         if (this.audioManager) this.audioManager.playPowerupSfx();
         this.powerupManager?.activatePowerup(powerUpType);
     }
@@ -324,12 +319,9 @@ export class GameManager extends Component {
         console.log("Game Over!");
 
         if (this.gameOverMenu) this.gameOverMenu.active = true;
+        if (this.howToPlayUI) this.howToPlayUI.active = false;
         if (this.inGameUI) this.inGameUI.active = false;
         if (this.finalScoreLabel) this.finalScoreLabel.string = Math.floor(this.score).toString();
-
-        // Reload the entire scene to restart
-        // In a full game, you'd show a game over screen here.
-
     }
 
     // --- Public method for the Restart button ---
