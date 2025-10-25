@@ -54,7 +54,7 @@ export const localizationData = {
         [ETextKey.ARABIC]: "عربي",
         [ETextKey.SPINNEYS_TAG]: "REDEEM THIS CODE AT SPINNEYS FOR A DISCOUNT",
         [ETextKey.COPY_CODE]: "COPY CODE",
-        [ETextKey.INFO_4_TITLE]: "CHIPS",
+        [ETextKey.INFO_4_TITLE]: "SHIELD",
     },
     'hi': {
         [ETextKey.PLAY]: "खेलें",
@@ -122,6 +122,6 @@ export const localizationData = {
         [ETextKey.ARABIC]: "عربي",
         [ETextKey.SPINNEYS_TAG]: "استخدم هذا الرمز في SPINNEY'S للحصول على خصومات",
         [ETextKey.COPY_CODE]: "نسخ الكود",
-        [ETextKey.INFO_4_TITLE]: "البطاطس",
+        [ETextKey.INFO_4_TITLE]: "درع",
     }
 };
