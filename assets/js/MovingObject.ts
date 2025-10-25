@@ -6,8 +6,8 @@ import { Tagger, EObjectType } from "./Tagger";
 const { ccclass, property } = _decorator;
 
 // This is the Y position where objects are considered "off-screen" at the bottom.
-const OFF_SCREEN_Y = 550;
-const MAGNET_RADIUS = 200;
+const OFF_SCREEN_Y = -550;
+const MAGNET_RADIUS = 450;
 
 @ccclass("MovingObject")
 export class MovingObject extends Component {
@@ -63,13 +63,13 @@ export class MovingObject extends Component {
             
             const newPos = this.node.getPosition();
             // newPos.y += this.speed * deltaTime;
-            newPos.y += currentSpeed * deltaTime;
+            newPos.y -= currentSpeed * deltaTime;
             newPos.x = this.spawner.laneRenderer.laneCenterXAtY(this.laneIndex, newPos.y);
             this.node.setPosition(newPos);
         }
 
         // Check if the object has gone off the bottom of the screen
-        if (this.node.position.y > OFF_SCREEN_Y) {
+        if (this.node.position.y < OFF_SCREEN_Y) {
             // If it has, tell the spawner to recycle it.
             this.despawn();
         }

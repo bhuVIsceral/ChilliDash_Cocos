@@ -15,7 +15,7 @@ const { ccclass, property } = _decorator;
 
 // We define constants for the spawner's logic
 const LANE_X_POSITIONS = [-120, 0, 120];
-const SPAWN_Y = -550; // Y position where objects appear at the top
+const SPAWN_Y = 550; // Y position where objects appear at the top
 
 @ccclass("Spawner")
 export class Spawner extends Component {
@@ -28,9 +28,9 @@ export class Spawner extends Component {
     @property({ type: Prefab }) public flowerPrefab: Prefab | null = null;
     @property({ type: Prefab }) public grassPrefab: Prefab | null = null;
     @property({ type: Prefab }) public powerupSpeedPrefab: Prefab | null = null;
-    @property({ type: Prefab }) public powerupMagnetPrefab: Prefab | null =
-        null;
+    @property({ type: Prefab }) public powerupMagnetPrefab: Prefab | null = null;
     @property({ type: Prefab }) public powerup2xPrefab: Prefab | null = null;
+    @property({ type: Prefab }) public powerupShieldPrefab: Prefab | null = null;
 
     // This property will be updated by the GameManager
     // public gameSpeed = 400;
@@ -44,6 +44,7 @@ export class Spawner extends Component {
     private powerupSpeedPool = new NodePool();
     private powerupMagnetPool = new NodePool();
     private powerup2xPool = new NodePool();
+    private powerupShieldPool = new NodePool();
 
     // --- MAPPING for easy lookup ---
     private pools: Map<string, NodePool> = new Map();
@@ -57,7 +58,7 @@ export class Spawner extends Component {
     // The interval will now be dynamic based on game speed
     private get spawnInterval() {
         // As game speed increases, the spawn interval decreases (more spawns)
-        return 0.75;
+        return 0.25;
     }
 
     onLoad() {
@@ -69,6 +70,7 @@ export class Spawner extends Component {
         this.initPool(this.powerupSpeedPool, this.powerupSpeedPrefab, 2);
         this.initPool(this.powerupMagnetPool, this.powerupMagnetPrefab, 2);
         this.initPool(this.powerup2xPool, this.powerup2xPrefab, 2);
+        this.initPool(this.powerupShieldPool, this.powerupShieldPrefab, 2);
 
         // Map prefab names to pools for easy despawning
         if (this.chilliPrefab)
@@ -88,17 +90,21 @@ export class Spawner extends Component {
             );
         if (this.powerup2xPrefab)
             this.pools.set(this.powerup2xPrefab.name, this.powerup2xPool);
+        if (this.powerupShieldPrefab) 
+            this.pools.set(this.powerupShieldPrefab.name, this.powerupShieldPool);
 
         // Create lists for easy random selection
         this.powerupPools = [
             this.powerupSpeedPool,
             this.powerupMagnetPool,
             this.powerup2xPool,
+            this.powerupShieldPool,
         ];
         this.powerupPrefabs = [
             this.powerupSpeedPrefab,
             this.powerupMagnetPrefab,
-            this.powerup2xPrefab,
+            this.powerup2xPrefab, 
+            this.powerupShieldPrefab,
         ];
         this.obstaclePools = [this.cratePool, this.grassPool, this.flowerPool];
         this.obstaclePrefabs = [
@@ -136,6 +142,7 @@ export class Spawner extends Component {
             } else if (randomValue < 0.4 && randomValue > 0.2) {
                 // 48% chance for an obstacle
                 this.spawnObstaclePattern();
+                // this.spawnRandomPowerUp();
             } else {
                 // 50% chance for chillies
                 this.spawnChilliPattern();
@@ -145,6 +152,7 @@ export class Spawner extends Component {
 
     private spawnRandomPowerUp() {
         const randomIndex = randomRangeInt(0, this.powerupPools.length);
+        // const randomIndex = randomRangeInt(2, 4);
         const randomLane = randomRangeInt(0, 3);
         this.spawnObject(
             this.powerupPools[randomIndex],

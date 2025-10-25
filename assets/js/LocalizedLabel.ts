@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Label, Enum } from 'cc';
+import { _decorator, Component, Node, Label, Enum , sys } from 'cc';
 import { ETextKey } from './LocalizationData';
 import { languageChangeEvent, LocalizationManager } from './LocalizationManager';
 const { ccclass, property } = _decorator;
@@ -11,7 +11,13 @@ export class LocalizedLabel extends Component {
 
     // This property will be a dropdown in the Inspector
     @property({ type: ETextKey })
-    public textKey: ETextKey = ETextKey.PLAY;
+    private textKey: ETextKey = ETextKey.PLAY;
+
+    @property()
+    private updateHorizontalAlign: boolean = false;
+
+    @property()
+    private defaultFontSize: number = 20;
 
     private label: Label | null = null;
 
@@ -23,6 +29,8 @@ export class LocalizedLabel extends Component {
 
     start() {
         // Set the initial text when the game starts
+        const savedLang = sys.localStorage.getItem('user_language');
+        LocalizationManager.instance.setLanguage(savedLang || 'en');
         this.updateText();
     }
     
@@ -34,6 +42,8 @@ export class LocalizedLabel extends Component {
     private updateText() {
         if (this.label && LocalizationManager.instance) {
             this.label.string = LocalizationManager.instance.getTranslation(this.textKey);
+            this.label.fontSize = this.defaultFontSize * LocalizationManager.instance.getFontSizeMultiplayer();
+            if(this.updateHorizontalAlign) this.label.horizontalAlign = LocalizationManager.instance.getHorizontalAlign();
         }
     }
 }

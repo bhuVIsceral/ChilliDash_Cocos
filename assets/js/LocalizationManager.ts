@@ -47,4 +47,12 @@ export class LocalizationManager extends Component {
     public getTranslation(key: ETextKey): string {
         return localizationData[this.currentLanguage][key] || '...';
     }
+
+    public getHorizontalAlign(): number {
+        return this.currentLanguage === 'ar' ? 2 : 0; // 2 = RIGHT, 0 = LEFT
+    }
+
+    public getFontSizeMultiplayer(): number {
+        return this.currentLanguage === 'ar' ? 1.5 : 1; // 2 = RIGHT, 0 = LEFT
+    }
 }

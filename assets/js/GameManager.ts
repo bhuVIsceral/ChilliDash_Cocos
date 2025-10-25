@@ -7,6 +7,8 @@ import { AudioManager } from "./AudioManager";
 import { PowerupManager } from "./PowerupManager";
 import { EObjectType } from "./Tagger";
 import { VFXManager } from "./VFXManager";
+import { EnvironmentManager } from './EnvironmentManager'; // NEW import
+import { PlayerVFX } from './PlayerVFX';
 
 const { ccclass, property } = _decorator;
 
@@ -36,6 +38,8 @@ export class GameManager extends Component {
     @property({ type: AudioManager }) public audioManager: AudioManager | null = null;
     @property({ type: PowerupManager }) public powerupManager: PowerupManager | null = null;
     @property({ type: VFXManager }) public vfxManager: VFXManager | null = null;
+    @property({ type: EnvironmentManager }) public environmentManager: EnvironmentManager | null = null;
+    @property({ type: PlayerVFX }) public playerVFX: PlayerVFX | null = null;
 
     // --- NEW: UI MENU REFERENCES ---
     @property({ type: Node }) public startMenu: Node | null = null;
@@ -53,14 +57,18 @@ export class GameManager extends Component {
     @property ( { type : [SpriteFrame]}) public muteButtonIcons : SpriteFrame[] = [];
     
     @property({type: Button}) public englishButton: Button | null = null;
-    @property({type: Button}) public hindiButton: Button | null = null;
-    @property({type: Button}) public hinglishButton: Button | null = null;
+    @property({type: Button}) public arabicButton: Button | null = null;
 
     // --- POWERUP UI ---
     // References for the UI cards to show their active state
     @property({ type: Node }) public powerupCardSpeed: Node | null = null;
     @property({ type: Node }) public powerupCardMagnet: Node | null = null;
     @property({ type: Node }) public powerupCard2x: Node | null = null;
+    @property({ type: Node }) public powerupCardShield: Node | null = null;
+
+    // --- NEW: References for Copy Code ---
+    @property({ type: Label }) public discountCodeLabel: Label | null = null;
+    @property({ type: Button }) public copyCodeButton: Button | null = null;
 
     // --- GAME STATE ---
     private gameState: "menu" | "playing" | "gameOver" = "menu";
@@ -72,6 +80,7 @@ export class GameManager extends Component {
     private timeElapsed = 0;
     private chilliesCollectedSinceLastScale = 0;
     private speedMilestones = 0;
+    private currentDiscountCode: string = ''; // Store the generated code
 
     private baseGameSpeed: number = INITIAL_GAME_SPEED;
 
@@ -93,6 +102,7 @@ export class GameManager extends Component {
     start() {
         this.setupMuteButton();
         this.setupLanguageButtons();
+        this.setupCopyCodeButton();
         languageChangeEvent.on('language-changed', this.updateLanguageButtonUIColor, this);
         this.updateLanguageButtonUIColor();
 
@@ -109,10 +119,19 @@ export class GameManager extends Component {
     update(deltaTime: number) {
         if (this.gameState !== "playing") return;
         // Update the game speed based on difficulty scaling
+        // --- CENTRALIZED VISUAL UPDATE LOGIC ---
+        const dominantPowerup = this.powerupManager?.getDominantActivePowerup() ?? EObjectType.None;
+
+        // Tell the EnvironmentManager to update its look
+        this.environmentManager?.updateVisuals(dominantPowerup);
+
+        // Tell the GameManager to update its own UI elements (cards, multiplier icon)
+        this.updatePowerupUI(); // Pass the dominant type
+
         this.updateDifficulty(deltaTime);
         this.currentGameSpeed = this.calculateCurrentSpeed();
         // Update the UI every frame
-        this.updatePowerupUI();
+        // this.updatePowerupUI();
     }
 
     private setupMuteButton() {
@@ -138,23 +157,23 @@ export class GameManager extends Component {
                 LocalizationManager.instance.setLanguage('en');
             }, this);
         }
-        if (this.hindiButton) {
-            this.hindiButton.node.on('click', () => {
-                LocalizationManager.instance.setLanguage('hi');
+        if (this.arabicButton) {
+            this.arabicButton.node.on('click', () => {
+                LocalizationManager.instance.setLanguage('ar');
             }, this);
         }
-        if (this.hinglishButton) {
-            this.hinglishButton.node.on('click', () => {
-                LocalizationManager.instance.setLanguage('en_HI');
-            }, this);
-        }
+        // if (this.hinglishButton) {
+        //     this.hinglishButton.node.on('click', () => {
+        //         LocalizationManager.instance.setLanguage('en_HI');
+        //     }, this);
+        // }
     }
 
      private updateLanguageButtonUIColor() {
         if (!LocalizationManager.instance) return;
 
         const currentLang = LocalizationManager.instance.getCurrentLanguage();
-        const activeColor = new Color(109, 173, 71); // A nice green color
+        const activeColor = new Color(255, 200, 0); // A nice mustard color
         const inactiveColor = new Color(128, 128, 128); // Grey
 
         // Helper function to get the Label component from a Button
@@ -167,15 +186,15 @@ export class GameManager extends Component {
             englishLabel.color = (currentLang === 'en') ? activeColor : inactiveColor;
         }
 
-        const hindiLabel = getButtonLabel(this.hindiButton);
+        const hindiLabel = getButtonLabel(this.arabicButton);
         if (hindiLabel) {
-            hindiLabel.color = (currentLang === 'hi') ? activeColor : inactiveColor;
+            hindiLabel.color = (currentLang === 'ar') ? activeColor : inactiveColor;
         }
 
-        const hinglishLabel = getButtonLabel(this.hinglishButton);
-        if (hinglishLabel) {
-            hinglishLabel.color = (currentLang === 'en_HI') ? activeColor : inactiveColor;
-        }
+        // const hinglishLabel = getButtonLabel(this.hinglishButton);
+        // if (hinglishLabel) {
+        //     hinglishLabel.color = (currentLang === 'en_HI') ? activeColor : inactiveColor;
+        // }
     }
 
     private howToPlay() {
@@ -233,18 +252,24 @@ export class GameManager extends Component {
         }
         return speed;
     }
-
+    
     public onPlayerHitObstacle() {
-        if (this.gameState !== "playing") return;
+        if (this.gameState !== 'playing') return;
 
-        this.vfxManager?.playHitEffect();
-
-        if (this.cameraShaker) this.cameraShaker.shake();
+        // --- THIS IS THE SHIELD LOGIC CHANGE ---
+        if (this.powerupManager?.isActive(EObjectType.PowerupShield)) {            
+            console.log("Shield blocked hit!");
+            return; // Stop processing the hit - player does not lose life
+        }
+        // --- If shield was NOT active, proceed with normal hit logic ---
         if (this.audioManager) this.audioManager.playHitSfx();
+        this.vfxManager?.playHitEffect();
+        if (this.cameraShaker) this.cameraShaker.shake();
         this.lives--;
         this.updateLivesUI();
-        console.log(`Player hit obstacle! Lives remaining: ${this.lives}`);
-
+        if (this.playerVFX && this.powerupManager) {
+            this.playerVFX.playVFX(this.powerupManager.getDominantActivePowerup());
+        }
         if (this.lives <= 0) this.endGame();
     }
 
@@ -257,6 +282,11 @@ export class GameManager extends Component {
 
         this.chilliesCollectedSinceLastScale++;
         this.updateScoreUI();
+
+        // --- Tell PlayerVFX to play using the current dominant powerup ---
+        // if (this.playerVFX && this.powerupManager) {
+        //     this.playerVFX.playVFX(this.powerupManager.getDominantActivePowerup());
+        // }
     }
 
     public onPlayerCollectPowerUp(powerUpType: EObjectType) {
@@ -264,6 +294,12 @@ export class GameManager extends Component {
         this.vfxManager?.playCollectEffect();
         if (this.audioManager) this.audioManager.playPowerupSfx();
         this.powerupManager?.activatePowerup(powerUpType);
+
+        // --- Tell PlayerVFX to play using the NEW dominant powerup ---
+        // Note: activatePowerup already updated the dominant one internally
+        // if (this.playerVFX && this.powerupManager) {
+        //     this.playerVFX.playVFX(this.powerupManager.getDominantActivePowerup());
+        // }
     }
 
     // --- UI Update Methods ---
@@ -293,7 +329,6 @@ export class GameManager extends Component {
 
                 const progressBarNode = card.getChildByName('ProgressBar');
                 if (progressBarNode) {
-
                     const opacityComp = progressBarNode.getComponent(UIOpacity);
                     if (opacityComp) {
                         console.log(progressBarNode + isActive.toString());
@@ -311,12 +346,52 @@ export class GameManager extends Component {
         updateCard(this.powerupCardSpeed, EObjectType.PowerupSpeed);
         updateCard(this.powerupCardMagnet, EObjectType.PowerupMagnet);
         updateCard(this.powerupCard2x, EObjectType.Powerup2x);
+        updateCard(this.powerupCardShield, EObjectType.PowerupShield);
     }
+
+    // --- UPDATED: updatePowerupUI now just handles the cards ---
+    // private updatePowerupUI(dominantPowerup: EObjectType) { // Receives dominant type
+    //     if (!this.powerupManager) return;
+
+    //     const updateCard = (card: Node | null, key: EObjectType) => {
+    //         if (card) {
+    //             const isActive = this.powerupManager.isActive(key);
+    //             const activeGlow = card.getChildByName('ActiveGlow');
+    //             if (activeGlow) activeGlow.active = isActive;
+
+    //             const progressBarNode = card.getChildByName('ProgressBar');
+    //             if (progressBarNode) {
+    //                 const opacityComp = progressBarNode.getComponent(UIOpacity);
+    //                 if (opacityComp) {
+    //                     console.log(progressBarNode + isActive.toString());
+    //                     opacityComp.opacity = isActive ? 255 : 0;
+    //                 }
+    //                 const spriteComp = progressBarNode.getComponent(Sprite);
+    //                 if (spriteComp) {
+    //                     spriteComp.fillRange = this.powerupManager.getProgress(key);
+    //                 }
+    //             }
+    //         }
+    //     };
+
+    //     updateCard(this.powerupCardSpeed, EObjectType.PowerupSpeed);
+    //     updateCard(this.powerupCardMagnet, EObjectType.PowerupMagnet);
+    //     updateCard(this.powerupCard2x, EObjectType.Powerup2x);
+    //     updateCard(this.powerupCardShield, EObjectType.PowerupShield);
+    // }
 
     private endGame() {
         this.gameState = "gameOver";
         if (this.audioManager) this.audioManager.stopBGM();
         console.log("Game Over!");
+
+        // const discountPercent = this.calculateDiscount(this.score);
+        // --- UPDATED: Generate and store the code ---
+        this.currentDiscountCode = "AP420#";
+        // `HUNTERS-${Math.floor(this.score)}-${Date.now().toString().slice(-6)}`;
+        // this.generateQRCode(this.currentDiscountCode); // Use the stored code
+        // if (this.discountLabel) this.discountLabel.string = `You've earned a ${discountPercent}% discount!`;
+        if (this.discountCodeLabel) this.discountCodeLabel.string = this.currentDiscountCode;
 
         if (this.gameOverMenu) this.gameOverMenu.active = true;
         if (this.howToPlayUI) this.howToPlayUI.active = false;
@@ -324,9 +399,95 @@ export class GameManager extends Component {
         if (this.finalScoreLabel) this.finalScoreLabel.string = Math.floor(this.score).toString();
     }
 
+    // --- NEW: Function to handle the copy button click ---
+    private copyDiscountCode() {
+        if (!this.currentDiscountCode) return;
+
+        // Try the modern clipboard API first
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(this.currentDiscountCode)
+                .then(() => {
+                    this.showCopiedFeedback();
+                })
+                .catch(err => {
+                    console.error('Modern clipboard write failed: ', err);
+                    // If it fails, try the fallback
+                    this.copyUsingExecCommand();
+                });
+        } 
+        // If the modern API isn't even available, go straight to fallback
+        else {
+            console.warn('Clipboard API not available, trying fallback.');
+            this.copyUsingExecCommand();
+        }
+    }
+
+    // --- NEW: Fallback function using execCommand ---
+    private copyUsingExecCommand() {
+        try {
+            // Create a temporary textarea element
+            const textArea = document.createElement("textarea");
+            textArea.value = this.currentDiscountCode;
+
+            // Make it invisible and append it to the body
+            textArea.style.position = "fixed"; 
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.width = "2em";
+            textArea.style.height = "2em";
+            textArea.style.padding = "0";
+            textArea.style.border = "none";
+            textArea.style.outline = "none";
+            textArea.style.boxShadow = "none";
+            textArea.style.background = "transparent";
+            document.body.appendChild(textArea);
+            
+            // Select the text and copy it
+            textArea.focus();
+            textArea.select();
+            
+            const successful = document.execCommand('copy');
+            
+            // Remove the temporary element
+            document.body.removeChild(textArea);
+
+            if (successful) {
+                this.showCopiedFeedback();
+            } else {
+                console.error('Fallback copy command failed.');
+                 // Optionally: Show an error message to the user
+            }
+        } catch (err) {
+            console.error('Error during fallback copy: ', err);
+             // Optionally: Show an error message to the user
+        }
+    }
+
+    // --- NEW: Helper function for showing feedback ---
+    private showCopiedFeedback() {
+        console.log('Discount code copied to clipboard!');
+        if (this.copyCodeButton) {
+            const originalLabel = this.copyCodeButton.getComponentInChildren(Label);
+            if (originalLabel) {
+                const originalText = originalLabel.string;
+                originalLabel.string = "COPIED!";
+                // Make sure we are not already scheduling this
+                this.unscheduleAllCallbacks(); 
+                this.scheduleOnce(() => { originalLabel.string = originalText; }, 1.5);
+            }
+        }
+    }
+    
+    // --- NEW: Function to set up the copy button listener ---
+    private setupCopyCodeButton() {
+        if (this.copyCodeButton) {
+            this.copyCodeButton.node.on('click', this.copyDiscountCode, this);
+        }
+    }
+
     // --- Public method for the Restart button ---
     public restartGame() {
         // Reloading the scene is the cleanest way to restart
-        director.loadScene("chilli_dash");
+        director.loadScene("hunter_dash");
     }
 }

@@ -65,7 +65,7 @@ export class CollisionManager extends Component {
             }
             // If the player is NOT jumping, then it's a valid hit.
             this.gameManager.onPlayerHitObstacle();
-        } else if (objectTag === EObjectType.PowerupSpeed || objectTag === EObjectType.PowerupMagnet || objectTag === EObjectType.Powerup2x) {
+        } else if (objectTag === EObjectType.PowerupSpeed || objectTag === EObjectType.PowerupMagnet || objectTag === EObjectType.Powerup2x || objectTag === EObjectType.PowerupShield) {
             this.gameManager.onPlayerCollectPowerUp(objectTag);
             otherCollider.node.emit('despawn');
         }
