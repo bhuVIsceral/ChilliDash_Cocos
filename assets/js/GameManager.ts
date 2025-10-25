@@ -267,9 +267,9 @@ export class GameManager extends Component {
         if (this.cameraShaker) this.cameraShaker.shake();
         this.lives--;
         this.updateLivesUI();
-        if (this.playerVFX && this.powerupManager) {
-            this.playerVFX.playVFX(this.powerupManager.getDominantActivePowerup());
-        }
+        // if (this.playerVFX && this.powerupManager) {
+        //     this.playerVFX.playVFX(this.powerupManager.getDominantActivePowerup());
+        // }
         if (this.lives <= 0) this.endGame();
     }
 
@@ -284,9 +284,9 @@ export class GameManager extends Component {
         this.updateScoreUI();
 
         // --- Tell PlayerVFX to play using the current dominant powerup ---
-        // if (this.playerVFX && this.powerupManager) {
-        //     this.playerVFX.playVFX(this.powerupManager.getDominantActivePowerup());
-        // }
+        if (this.playerVFX && this.powerupManager) {
+            this.playerVFX.playVFX(this.powerupManager.getDominantActivePowerup());
+        }
     }
 
     public onPlayerCollectPowerUp(powerUpType: EObjectType) {
@@ -297,9 +297,9 @@ export class GameManager extends Component {
 
         // --- Tell PlayerVFX to play using the NEW dominant powerup ---
         // Note: activatePowerup already updated the dominant one internally
-        // if (this.playerVFX && this.powerupManager) {
-        //     this.playerVFX.playVFX(this.powerupManager.getDominantActivePowerup());
-        // }
+        if (this.playerVFX && this.powerupManager) {
+            this.playerVFX.playVFX(this.powerupManager.getDominantActivePowerup());
+        }
     }
 
     // --- UI Update Methods ---

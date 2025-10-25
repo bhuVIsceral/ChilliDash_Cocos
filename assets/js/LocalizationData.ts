@@ -24,6 +24,7 @@ export enum ETextKey {
     ARABIC,
     SPINNEYS_TAG,
     COPY_CODE,
+    INFO_4_TITLE,
     // Add any new text keys here
 }
 
@@ -53,6 +54,7 @@ export const localizationData = {
         [ETextKey.ARABIC]: "عربي",
         [ETextKey.SPINNEYS_TAG]: "REDEEM THIS CODE AT SPINNEYS FOR A DISCOUNT",
         [ETextKey.COPY_CODE]: "COPY CODE",
+        [ETextKey.INFO_4_TITLE]: "CHIPS",
     },
     'hi': {
         [ETextKey.PLAY]: "खेलें",
@@ -119,6 +121,7 @@ export const localizationData = {
         [ETextKey.HOW_TO_PLAY]: "كيفية اللعب",
         [ETextKey.ARABIC]: "عربي",
         [ETextKey.SPINNEYS_TAG]: "استخدم هذا الرمز في SPINNEY'S للحصول على خصومات",
-        [ETextKey.COPY_CODE]: "COPY CODE",
+        [ETextKey.COPY_CODE]: "نسخ الكود",
+        [ETextKey.INFO_4_TITLE]: "البطاطس",
     }
 };

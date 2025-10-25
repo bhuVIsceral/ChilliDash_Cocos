@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.Prefab",
-    "_name": "Crate3",
+    "_name": "Crate1",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_native": "",
@@ -13,7 +13,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Crate3",
+    "_name": "Crate1",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": null,
@@ -82,8 +82,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 245,
-      "height": 201
+      "width": 150,
+      "height": 120
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -119,12 +119,12 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "d24bf3c1-402a-4788-a9e7-e4719da9560d@f9941",
+      "__uuid__": "c206a829-67ea-4041-87a2-f1098ed3d64d@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,
     "_fillType": 0,
-    "_sizeMode": 1,
+    "_sizeMode": 0,
     "_fillCenter": {
       "__type__": "cc.Vec2",
       "x": 0,
@@ -162,12 +162,12 @@
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
-      "y": 50
+      "y": 0
     },
     "_size": {
       "__type__": "cc.Size",
-      "width": 245,
-      "height": 100
+      "width": 150,
+      "height": 120
     },
     "_id": ""
   },
@@ -221,7 +221,6 @@
       "__id__": 0
     },
     "fileId": "23+iW8bbNCWYozZCKyClRd",
-    "instance": null,
-    "targetOverrides": null
+    "instance": null
   }
 ]
