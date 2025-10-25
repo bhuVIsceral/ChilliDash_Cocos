@@ -404,6 +404,9 @@
     "powerupCardShield": {
       "__id__": 143
     },
+    "discountLabel": {
+      "__id__": 339
+    },
     "discountCodeLabel": {
       "__id__": 345
     },
@@ -11570,7 +11573,7 @@
         "__id__": 351
       }
     ],
-    "_active": false,
+    "_active": true,
     "_components": [
       {
         "__id__": 360
@@ -12737,8 +12740,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 293.0625,
-      "height": 50.4
+      "width": 264.69140625,
+      "height": 63
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -12773,11 +12776,14 @@
     "_actualFontSize": 72,
     "_fontSize": 72,
     "_fontFamily": "Tahoma",
-    "_lineHeight": 40,
+    "_lineHeight": 50,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": null,
-    "_isSystemFontUsed": true,
+    "_font": {
+      "__uuid__": "b5475517-23b9-4873-bc1a-968d96616081",
+      "__expectedType__": "cc.TTFFont"
+    },
+    "_isSystemFontUsed": false,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": true,

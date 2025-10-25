@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Label, director, Sprite, SpriteFrame, UIOpacity, Button, Color, Vec3 } from "cc";
+import { _decorator, Component, Node, Label, director, Sprite, SpriteFrame, UIOpacity, Button, Color } from "cc";
 import { languageChangeEvent, LocalizationManager } from "./LocalizationManager";
 import { PlayerController } from "./PlayerController";
 import { Spawner } from "./Spawner";
@@ -22,6 +22,12 @@ const CHILLI_SCORE = 1;
 // Difficulty Scaling Rules
 const TIME_TO_SCALE = 40; // seconds
 const CHILLIES_TO_SCALE = 50;
+
+const SCORE_THRESHOLDS = [50, 100, 150, 200, 250, 300];
+const DISCOUNT_LEVELS = [5, 10, 15, 20, 25, 30];
+// --- NEW: Bonus Constants ---
+const POWERUP_COLLECTION_BONUS = 50;
+const TOTAL_POWERUP_TYPES = 4; // Speed, Magnet, 2x, Shield
 
 @ccclass("GameManager")
 export class GameManager extends Component {
@@ -67,6 +73,7 @@ export class GameManager extends Component {
     @property({ type: Node }) public powerupCardShield: Node | null = null;
 
     // --- NEW: References for Copy Code ---
+    @property({ type: Label }) public discountLabel: Label | null = null;
     @property({ type: Label }) public discountCodeLabel: Label | null = null;
     @property({ type: Button }) public copyCodeButton: Button | null = null;
 
@@ -83,6 +90,9 @@ export class GameManager extends Component {
     private currentDiscountCode: string = ''; // Store the generated code
 
     private baseGameSpeed: number = INITIAL_GAME_SPEED;
+
+    // --- NEW: Set to track unique powerups collected in this cycle ---
+    private collectedPowerupTypes: Set<EObjectType> = new Set();
 
     onLoad() {
         // Set up the singleton instance
@@ -218,6 +228,7 @@ export class GameManager extends Component {
         this.timeElapsed = 0;
         this.chilliesCollectedSinceLastScale = 0;
         this.speedMilestones = 0;
+        this.collectedPowerupTypes.clear(); // --- NEW: Reset collected types ---
         this.updateScoreUI();
         this.updateLivesUI();
 
@@ -295,6 +306,22 @@ export class GameManager extends Component {
         if (this.audioManager) this.audioManager.playPowerupSfx();
         this.powerupManager?.activatePowerup(powerUpType);
 
+        // --- NEW: Track collected type and check for bonus ---
+        this.collectedPowerupTypes.add(powerUpType);
+        console.log(`Collected types: ${this.collectedPowerupTypes.size} / ${TOTAL_POWERUP_TYPES}`);
+
+        if (this.collectedPowerupTypes.size === TOTAL_POWERUP_TYPES) {
+            this.score += POWERUP_COLLECTION_BONUS;
+            this.collectedPowerupTypes.clear(); // Reset for the next cycle
+            this.updateScoreUI();
+            console.log(`All power-ups collected! +${POWERUP_COLLECTION_BONUS} points!`);
+            // // Optionally: Play a special bonus sound or effect
+            // this.audioManager?.playChilliSfx(); // Placeholder bonus sound
+            // if(this.playerController && this.vfxManager) {
+            //      this.vfxManager.playCollectEffect(); // Bonus VFX
+            // }
+        }
+
         // --- Tell PlayerVFX to play using the NEW dominant powerup ---
         // Note: activatePowerup already updated the dominant one internally
         if (this.playerVFX && this.powerupManager) {
@@ -349,48 +376,34 @@ export class GameManager extends Component {
         updateCard(this.powerupCardShield, EObjectType.PowerupShield);
     }
 
-    // --- UPDATED: updatePowerupUI now just handles the cards ---
-    // private updatePowerupUI(dominantPowerup: EObjectType) { // Receives dominant type
-    //     if (!this.powerupManager) return;
-
-    //     const updateCard = (card: Node | null, key: EObjectType) => {
-    //         if (card) {
-    //             const isActive = this.powerupManager.isActive(key);
-    //             const activeGlow = card.getChildByName('ActiveGlow');
-    //             if (activeGlow) activeGlow.active = isActive;
-
-    //             const progressBarNode = card.getChildByName('ProgressBar');
-    //             if (progressBarNode) {
-    //                 const opacityComp = progressBarNode.getComponent(UIOpacity);
-    //                 if (opacityComp) {
-    //                     console.log(progressBarNode + isActive.toString());
-    //                     opacityComp.opacity = isActive ? 255 : 0;
-    //                 }
-    //                 const spriteComp = progressBarNode.getComponent(Sprite);
-    //                 if (spriteComp) {
-    //                     spriteComp.fillRange = this.powerupManager.getProgress(key);
-    //                 }
-    //             }
-    //         }
-    //     };
-
-    //     updateCard(this.powerupCardSpeed, EObjectType.PowerupSpeed);
-    //     updateCard(this.powerupCardMagnet, EObjectType.PowerupMagnet);
-    //     updateCard(this.powerupCard2x, EObjectType.Powerup2x);
-    //     updateCard(this.powerupCardShield, EObjectType.PowerupShield);
-    // }
+    private calculateDiscount(score: number): number {
+        let finalDiscount = 5; // Default discount
+        // Loop through the score thresholds
+        for (let i = 0; i < SCORE_THRESHOLDS.length; i++) {
+            // If the player's score meets or exceeds the threshold...
+            if (score >= SCORE_THRESHOLDS[i]) {
+                // ...set the discount to the corresponding level
+                finalDiscount = DISCOUNT_LEVELS[i];
+            }
+        }
+        // Return the highest discount level achieved
+        return finalDiscount;
+    }
 
     private endGame() {
         this.gameState = "gameOver";
         if (this.audioManager) this.audioManager.stopBGM();
         console.log("Game Over!");
 
-        // const discountPercent = this.calculateDiscount(this.score);
+        const discountPercent = this.calculateDiscount(this.score);
         // --- UPDATED: Generate and store the code ---
+        `HUNTERS-${Math.floor(this.score)}-${Date.now().toString().slice(-6)}`;
         this.currentDiscountCode = "AP420#";
-        // `HUNTERS-${Math.floor(this.score)}-${Date.now().toString().slice(-6)}`;
         // this.generateQRCode(this.currentDiscountCode); // Use the stored code
-        // if (this.discountLabel) this.discountLabel.string = `You've earned a ${discountPercent}% discount!`;
+        if (this.discountLabel) {
+            const paddedPercent = discountPercent.toString();
+            this.discountLabel.string = `HH#${paddedPercent}%`;
+        }
         if (this.discountCodeLabel) this.discountCodeLabel.string = this.currentDiscountCode;
 
         if (this.gameOverMenu) this.gameOverMenu.active = true;
