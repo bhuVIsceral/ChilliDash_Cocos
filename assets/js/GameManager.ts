@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Label, director, Sprite, SpriteFrame, UIOpacity, Button, Color } from "cc";
+import { _decorator, Component, Node, Label, director, Sprite, SpriteFrame, UIOpacity, v3, Button, Color, UITransform, tween, Vec3 } from "cc";
 import { languageChangeEvent, LocalizationManager } from "./LocalizationManager";
 import { PlayerController } from "./PlayerController";
 import { Spawner } from "./Spawner";
@@ -50,6 +50,8 @@ export class GameManager extends Component {
     // --- NEW: UI MENU REFERENCES ---
     @property({ type: Node }) public startMenu: Node | null = null;
     @property({ type: Node }) public howToPlayUI: Node | null = null;
+    @property({ type: Node }) public howToPlayUIPage01: Node | null = null;
+    @property({ type: Node }) public howToPlayUIPage02: Node | null = null;
     @property({ type: Node }) public gameOverMenu: Node | null = null;
     @property({ type: Node }) public inGameUI: Node | null = null; // A parent node for all in-game UI
     @property({ type: Label }) public finalScoreLabel: Label | null = null;
@@ -71,6 +73,7 @@ export class GameManager extends Component {
     @property({ type: Node }) public powerupCardMagnet: Node | null = null;
     @property({ type: Node }) public powerupCard2x: Node | null = null;
     @property({ type: Node }) public powerupCardShield: Node | null = null;
+    @property({ type: Node }) public bonusCard: Node | null = null;
 
     // --- NEW: References for Copy Code ---
     @property({ type: Label }) public discountLabel: Label | null = null;
@@ -93,7 +96,7 @@ export class GameManager extends Component {
 
     // --- NEW: Set to track unique powerups collected in this cycle ---
     private collectedPowerupTypes: Set<EObjectType> = new Set();
-
+    
     onLoad() {
         // Set up the singleton instance
         if (GameManager.instance === null) {
@@ -212,6 +215,7 @@ export class GameManager extends Component {
         if (this.howToPlayUI) this.howToPlayUI.active = true;
         if (this.gameOverMenu) this.gameOverMenu.active = false;
         if (this.inGameUI) this.inGameUI.active = false;        
+        this.showHowToPlayPage1();
     }
 
     private startGame() {
@@ -313,6 +317,7 @@ export class GameManager extends Component {
         if (this.collectedPowerupTypes.size === TOTAL_POWERUP_TYPES) {
             this.score += POWERUP_COLLECTION_BONUS;
             this.collectedPowerupTypes.clear(); // Reset for the next cycle
+            this.animateBonusUI();
             this.updateScoreUI();
             console.log(`All power-ups collected! +${POWERUP_COLLECTION_BONUS} points!`);
             // // Optionally: Play a special bonus sound or effect
@@ -328,6 +333,99 @@ export class GameManager extends Component {
             this.playerVFX.playVFX(this.powerupManager.getDominantActivePowerup());
         }
     }
+
+    // Replace the existing animateBonusUI function with this one
+
+    private animateBonusUI() {
+        if (!this.bonusCard) {
+            console.error("Bonus Card node is not assigned in the GameManager!");
+            return;
+        }
+
+        const opacity = this.bonusCard.getComponent(UIOpacity);
+        const uiTransform = this.bonusCard.getComponent(UITransform);
+
+        if (!opacity || !uiTransform) {
+            console.error("Bonus Card is missing UIOpacity or UITransform component!");
+            return;
+        }
+
+        // --- Define target properties ---
+        const startPosition = v3(0, 0, 0); 
+        const endPosition = v3(150, 320, 0); 
+        const initialScale = v3(0, 0, 0);
+        const targetScale = v3(1.5, 1.5, 1.5);
+        const fadeInDuration = .5;
+        const holdDuration = 1;
+        const fadeOutDuration = .5;
+
+        // --- Reset State Immediately ---
+        this.bonusCard.active = true; // Make sure it's active
+        this.bonusCard.setPosition(startPosition);
+        this.bonusCard.setScale(initialScale);
+        opacity.opacity = 0;
+        uiTransform.priority = 1001; // Bring to front
+
+        // --- Start the Animation Sequence ---
+        tween(this.bonusCard)
+            // Scale up while fading in
+            .parallel(
+                tween().to(fadeInDuration, { scale: targetScale }, { easing: 'cubicOut' }),
+                tween(opacity).to(fadeInDuration, { opacity: 255 }, { easing: 'cubicOut' })
+            )
+            // Hold for a moment
+            .delay(holdDuration)
+            // Fade out
+            .then(
+                tween(this.bonusCard).parallel(
+                    tween(opacity).to(fadeOutDuration, { opacity: 0 }, { easing: 'cubicIn' }),
+                    tween().to(fadeOutDuration, {position: endPosition}, { easing: 'cubicIn' })
+                )
+                
+            )
+            // After fade out, reset scale and hide
+            .call(() => {
+                this.bonusCard.setScale(initialScale);
+                // Optionally make the node inactive again if desired
+                // this.bonusCard.active = false;
+            })
+            .start(); // Don't forget to start the tween!
+    }
+
+    // --- And make sure Vec3 and UIOpacity are imported ---
+    // Add Vec3 and UIOpacity to your import from 'cc' at the top
+    // import { _decorator, Component, Node, ..., Vec3, UIOpacity } from 'cc';
+
+    // private animateBonusUI()
+    // {
+    //     const opacity = this.bonusCard.getComponent(UIOpacity);
+    //     const uiTransform = this.bonusCard.getComponent(UITransform);
+
+    //     if(opacity && uiTransform)
+    //     {
+    //         uiTransform.priority = 1001;
+    //         tween(opacity)
+    //             .to(0, {opacity: 255}, {easing: 'linear'})
+    //             .start();
+    //         tween(this.bonusCard)
+    //             .to(0, {scale: new Vec3(0, 0, 0)}, {easing: 'linear'})
+    //             .start();
+    //     }
+
+    //     if(opacity && uiTransform)
+    //     {
+    //         uiTransform.priority = 1001;
+    //         tween(this.bonusCard)
+    //             .to(.05, {worldPosition: new Vec3(270, 480, 0)}, {easing: 'cubicIn'})
+    //             .start();
+    //         tween(this.bonusCard)
+    //             .to(.35, {scale: new Vec3(2, 2, 2)}, {easing: 'cubicIn'})
+    //             .start();
+    //         tween(opacity)
+    //             .to(1, {opacity: 0}, {easing: 'cubicIn'})
+    //             .start();
+    //     }
+    // }
 
     // --- UI Update Methods ---
     private updateScoreUI() {
@@ -398,12 +496,12 @@ export class GameManager extends Component {
         const discountPercent = this.calculateDiscount(this.score);
         // --- UPDATED: Generate and store the code ---
         `HUNTERS-${Math.floor(this.score)}-${Date.now().toString().slice(-6)}`;
-        this.currentDiscountCode = "AP420#";
         // this.generateQRCode(this.currentDiscountCode); // Use the stored code
         if (this.discountLabel) {
             const paddedPercent = discountPercent.toString();
             this.discountLabel.string = `HH#${paddedPercent}%`;
         }
+        this.currentDiscountCode = this.discountLabel.string;
         if (this.discountCodeLabel) this.discountCodeLabel.string = this.currentDiscountCode;
 
         if (this.gameOverMenu) this.gameOverMenu.active = true;
@@ -483,7 +581,7 @@ export class GameManager extends Component {
             const originalLabel = this.copyCodeButton.getComponentInChildren(Label);
             if (originalLabel) {
                 const originalText = originalLabel.string;
-                originalLabel.string = "COPIED!";
+                originalLabel.string = LocalizationManager.instance.getCurrentLanguage() === 'en' ? "COPIED!" : "تم النسخ!";
                 // Make sure we are not already scheduling this
                 this.unscheduleAllCallbacks(); 
                 this.scheduleOnce(() => { originalLabel.string = originalText; }, 1.5);
@@ -502,5 +600,15 @@ export class GameManager extends Component {
     public restartGame() {
         // Reloading the scene is the cleanest way to restart
         director.loadScene("hunter_dash");
+    }
+
+    public showHowToPlayPage1() {
+        if (this.howToPlayUIPage01) this.howToPlayUIPage01.active = true;
+        if (this.howToPlayUIPage02) this.howToPlayUIPage02.active = false;
+    }
+
+    public showHowToPlayPage2() {
+        if (this.howToPlayUIPage01) this.howToPlayUIPage01.active = false;
+        if (this.howToPlayUIPage02) this.howToPlayUIPage02.active = true;
     }
 }

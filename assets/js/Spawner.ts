@@ -288,7 +288,7 @@ export class Spawner extends Component {
         for (const child of this.node.children) {
             const movingObject = child.getComponent(MovingObject);
             // Check if the child is a moving object and is in the target lane
-            if (movingObject && movingObject.laneIndex === lane) {
+            if (movingObject && !movingObject.isAnimatingDespawn && movingObject.laneIndex === lane) {
                 highestYInLane = Math.max(highestYInLane, child.position.y);
             }
         }

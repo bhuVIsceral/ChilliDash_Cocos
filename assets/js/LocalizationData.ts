@@ -25,6 +25,8 @@ export enum ETextKey {
     SPINNEYS_TAG,
     COPY_CODE,
     INFO_4_TITLE,
+    TAG_LINE_2,
+    BONUS_INFO,
     // Add any new text keys here
 }
 
@@ -55,6 +57,9 @@ export const localizationData = {
         [ETextKey.SPINNEYS_TAG]: "REDEEM THIS CODE AT SPINNEYS FOR A DISCOUNT",
         [ETextKey.COPY_CODE]: "COPY CODE",
         [ETextKey.INFO_4_TITLE]: "SHIELD",
+        [ETextKey.TAG_LINE_2]: "Hunter's Gourmet Truffle flavors are always available at Spinneys!",
+        [ETextKey.BONUS_INFO]: "Collect all four FLAVOURS to get a BONUS 50 points",
+
     },
     'hi': {
         [ETextKey.PLAY]: "खेलें",
@@ -123,5 +128,7 @@ export const localizationData = {
         [ETextKey.SPINNEYS_TAG]: "استخدم هذا الرمز في SPINNEY'S للحصول على خصومات",
         [ETextKey.COPY_CODE]: "نسخ الكود",
         [ETextKey.INFO_4_TITLE]: "درع",
+        [ETextKey.TAG_LINE_2]: "نكهات Hunter's Gourmet Truffle متوفرة دائمًا في Spinneys!",
+        [ETextKey.BONUS_INFO]: "اجمع كل النكهات الأربع لتحصل على مكافأة قدرها 50 نقطة",
     }
 };

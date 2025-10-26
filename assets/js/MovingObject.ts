@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, tween } from "cc";
+import { _decorator, Component, Node, Vec3, tween, UIOpacity, UITransform } from "cc";
 import { Spawner } from "./Spawner";
 import { GameManager } from "./GameManager";
 import { Tagger, EObjectType } from "./Tagger";
@@ -12,23 +12,46 @@ const MAGNET_RADIUS = 450;
 @ccclass("MovingObject")
 export class MovingObject extends Component {
     public spawner: Spawner | null = null;
-    // public speed = 200;
     public laneIndex: number = 0;
+
+    // --- NEW: Flag to prevent double despawn during animation ---
+    public isAnimatingDespawn: boolean = false;
+    private initialScale: Vec3 = new Vec3(); // Store original scale
 
     onLoad() {
         // Listen for the 'despawn' event
-        this.node.on("despawn", this.despawn, this);
+        this.node.on("despawn", this.initiateDespawn, this);
+        this.initialScale.set(this.node.scale); // Store initial scale on load
     }
 
     onDestroy() {
-        this.node.off("despawn", this.despawn, this);
+        this.node.off("despawn", this.initiateDespawn, this);
+    }
+
+    // Called when the object is taken from the pool
+    reuse() {
+        this.isAnimatingDespawn = false; // Reset the flag
+        this.node.setScale(this.initialScale); // Reset scale
+        const opacity = this.getComponent(UIOpacity);
+        if (opacity) {
+            opacity.opacity = 255; // Reset opacity
+        }
+    }
+     // Called before the object is put back into the pool
+    unuse() {
+        // Optional cleanup if needed
     }
 
     update(deltaTime: number) {
+        // --- Prevent movement if despawn animation is playing ---
+        if (this.isAnimatingDespawn) {
+            return;
+        }
         // --- MAGNET LOGIC ---
         // We use the singleton to easily access the game state.
         const gameManager = GameManager.instance;
         if (!gameManager) return; // Safety check
+
         const currentSpeed = gameManager.currentGameSpeed;
         const tagger = this.getComponent(Tagger);
 
@@ -71,20 +94,70 @@ export class MovingObject extends Component {
         // Check if the object has gone off the bottom of the screen
         if (this.node.position.y < OFF_SCREEN_Y) {
             // If it has, tell the spawner to recycle it.
-            this.despawn();
+            this.initiateDespawn();
         }
     }
 
-    private despawn() {
-        // --- THIS IS THE FIX ---
-        // If the node has no parent, it means it has already been despawned and
-        // put back into the pool. In this case, we do nothing.
-        if (!this.node.parent) {
+    // --- Renamed to initiateDespawn to distinguish from the actual pooling ---
+    private initiateDespawn() {
+        // Prevent starting the animation multiple times
+        if (this.isAnimatingDespawn || !this.node.parent) {
             return;
         }
 
+        const tagger = this.getComponent(Tagger);
+        const isPowerup = tagger && (
+            tagger.tag === EObjectType.PowerupSpeed ||
+            tagger.tag === EObjectType.PowerupMagnet ||
+            tagger.tag === EObjectType.Powerup2x ||
+            tagger.tag === EObjectType.PowerupShield
+        );
+
+        if (isPowerup) {
+            // --- POWER-UP: Start the animation ---
+            this.isAnimatingDespawn = true;
+            const opacity = this.getComponent(UIOpacity);
+            const uiTransform = this.getComponent(UITransform); // Needed for z-index
+
+            if (opacity && uiTransform) {
+                 // Bring to front temporarily
+                uiTransform.priority = 1000;
+
+                tween(this.node)
+                    .to(.05, { worldPosition: new Vec3(270, 480, 0) }, { easing: 'cubicIn' }) // Scale up fast
+                    .start();
+                tween(this.node)
+                    .to(.3, { scale: new Vec3(2, 2, 1) }, { easing: 'cubicIn' }) // Scale up fast
+                    .start();
+                tween(opacity)
+                    .to(.5, { opacity: 0 }, { easing: 'cubicIn' }) // Fade out slightly slower
+                    .call(() => {
+                        this.finishDespawn(); // Call the actual despawn when done
+                    })
+                    .start();
+            } else {
+                // Fallback if components are missing
+                console.warn("Powerup missing UIOpacity or UITransform for animation.");
+                this.finishDespawn();
+            }
+        } else {
+            // --- NOT a power-up: Despawn immediately ---
+            this.finishDespawn();
+        }
+    }
+
+    // --- This function handles the actual return to the pool ---
+    private finishDespawn() {
+        if (!this.node.parent) { // Extra safety check
+            return;
+        }
         if (this.spawner) {
+            // Reset priority before returning to pool
+            const uiTransform = this.getComponent(UITransform);
+            if(uiTransform) uiTransform.priority = 0;
+
             this.spawner.despawnObject(this.node);
+            // Don't reset flag here, reuse() will handle it.
         }
     }
 }
